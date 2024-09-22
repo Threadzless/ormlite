@@ -27,6 +27,14 @@ impl Type {
         }
     }
 
+    pub fn is_string_or_optional_string(&self) -> bool {
+        match self {
+            Type::Option(inner) => inner.is_string(),
+            Type::Inner(ty) => ty.ident == "String",
+            _ => false
+        }
+    }
+
     pub fn is_json(&self) -> bool {
         match self {
             Type::Inner(ty) => ty.ident == "Json",
@@ -82,6 +90,27 @@ impl Type {
             Type::Option(ty) => ty.qualified_inner_name(),
             Type::Vec(ty) => ty.qualified_inner_name(),
             Type::Join(ty) => ty.qualified_inner_name(),
+        }
+    }
+
+    /// Convert Rust types into equivilent SQL types.
+    pub fn try_into_sql_type(&self) -> Result<String, InnerType> {
+        let inner = self.inner_type();
+        match inner.ident.as_ref().as_str() {
+            "i8" | "i16" | "i32" | "i64" | "i128" | "isize" |
+            "u8" | "u16" | "u32" | "u64" | "u128" | "usize" => Ok(String::from("INTEGER")),
+            "f32" => Ok(String::from("FLOAT")),
+            "f64" => Ok(String::from("DOUBLE")),
+            
+            "String" => Ok(String::from("TEXT")),
+            
+            "Date" => Ok(String::from("DATE")),
+            "DateTime" => Ok(String::from("DATETIME")),
+
+            "JsonValue" |
+            "Json" => Ok(String::from("JSONB")),
+
+            _ => Err(inner.clone())
         }
     }
 }

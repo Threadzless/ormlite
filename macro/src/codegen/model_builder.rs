@@ -21,10 +21,10 @@ pub fn struct_ModelBuilder(ast: &DeriveInput, attr: &ModelMeta) -> TokenStream {
     let methods = attr.database_columns().map(|c| {
         let name = &c.ident;
         let ty = &c.ty;
-        if ty.is_string() {
+        if ty.is_string_or_optional_string() {
             quote! {
-                pub fn #name<T: Into<String>>(mut self, #name: T) -> Self {
-                    self.#name = Some(#name.into());
+                pub fn #name(mut self, #name: impl ToString) -> Self {
+                    self.#name = Some(#name.to_string());
                     self
                 }
             }

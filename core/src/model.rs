@@ -103,6 +103,11 @@ where
     fn update_partial(&self) -> Self::ModelBuilder<'_>;
 
     fn builder() -> Self::ModelBuilder<'static>;
+
+    /// Creates this table on the database, if it doesn't exist
+    fn create_table<'e, E>(db: E) -> BoxFuture<'e, Result<()>>
+    where 
+        E: 'e + Send + ::sqlx::Executor<'e, Database = DB>;
 }
 
 pub trait TableMeta {

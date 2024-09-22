@@ -5,20 +5,19 @@ use ormlite::Connection;
 #[ormlite(insertable = InsertPerson)]
 // #[index(col, col2, col3, unique = true, name = "my_index", type="btree")]
 pub struct Person {
+    #[ormlite(primary_key)]
     pub id: i32,
     pub name: String,
     pub age: i16,
 }
 
-pub static CREATE_TABLE_SQL: &str = "CREATE TABLE person (id INTEGER PRIMARY KEY, name TEXT, age INTEGER)";
-
 #[tokio::test]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut conn = ormlite::sqlite::SqliteConnection::connect(":memory:").await.unwrap();
     env_logger::init();
-
-    ormlite::query(CREATE_TABLE_SQL).execute(&mut conn).await?;
-
+    
+    Person::create_table(&mut conn).await?;
+    
     // You can insert the model directly.
     let mut john = Person {
         id: 1,

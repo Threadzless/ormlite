@@ -175,6 +175,49 @@ impl ColumnMeta {
             json: false,
         }
     }
+
+    /// Outputs the part of a SQL query needed to describe a table column.
+    /// 
+    /// For example, a model defined like this:
+    /// ```rust,ignore
+    /// #[derive(Model, Debug)]
+    /// #[ormlite(table = "books")]
+    /// pub struct Book {
+    ///     #[ormlite(primary_key)]
+    ///     pub id: i32,
+    ///     pub title: String,
+    ///     pub subtitle: Option<String>,
+    /// }
+    /// ```
+    /// iterating through the [`ColumnMeta`]s and calling [`describe`](Self::describe) 
+    /// on each would produce this output:
+    /// ```rust,ignore
+    /// [
+    ///     "id INTEGER PRIMARY KEY NOT NULL",
+    ///     "title TEXT NOT NULL",
+    ///     "subtitle TEXT",
+    /// ]
+    /// ```
+    /// 
+    /// TODO: verify 
+    pub fn describe(&self) -> String {
+        use std::fmt::Write;
+
+        let mut desc = match self.ty.try_into_sql_type() {
+            Ok(ty_desc) => format!("`{}` {}", self.name, ty_desc),
+            Err(_) => format!("`{}` INTEGER", self.name)
+        };
+
+        if self.marked_primary_key {
+            write!(desc, " PRIMARY KEY").unwrap();
+        }
+
+        if ! self.ty.is_option() {
+            write!(desc, " NOT NULL").unwrap();
+        }
+
+        desc
+    }
 }
 
 #[derive(Clone, Debug)]
