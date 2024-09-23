@@ -68,7 +68,7 @@ impl Down {
             let target = if let Some(target) = self.target {
                 target
             } else if executed.len() > 1 {
-                executed.iter().nth(1).unwrap().name.clone()
+                executed.first().unwrap().name.clone()
             } else if executed.len() == 1 {
                 "0_empty".to_string()
             } else {

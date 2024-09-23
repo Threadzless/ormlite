@@ -31,7 +31,6 @@ impl TableMeta {
         let mut pkey = columns
             .iter()
             .find(|&c| c.marked_primary_key)
-            .map(|c| c.clone())
             .map(|c| c.name.clone());
         if pkey.is_none() {
             let candidates = sqlmo::util::pkey_column_names(&name);

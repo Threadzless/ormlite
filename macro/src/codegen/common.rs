@@ -7,7 +7,7 @@ use ormlite_attr::TableMeta;
 use ormlite_attr::{InnerType, Type};
 use ormlite_core::query_builder::Placeholder;
 use proc_macro2::TokenStream;
-use quote::{quote, ToTokens};
+use quote::quote;
 use std::borrow::Cow;
 
 pub fn generate_conditional_bind(c: &ColumnMeta) -> TokenStream {
@@ -31,15 +31,6 @@ pub fn generate_conditional_bind(c: &ColumnMeta) -> TokenStream {
             }
         }
     }
-}
-
-/// bool whether the given type is `String`
-fn ty_is_string(ty: &syn::Type) -> bool {
-    let p = match ty {
-        syn::Type::Path(p) => p,
-        _ => return false,
-    };
-    p.path.segments.last().map(|s| s.ident == "String").unwrap_or(false)
 }
 
 fn recursive_primitive_types_ty<'a>(ty: &'a Type, cache: &'a MetadataCache) -> Vec<Cow<'a, InnerType>> {
@@ -67,8 +58,7 @@ fn recursive_primitive_types<'a>(table: &'a ModelMeta, cache: &'a MetadataCache)
     table
         .columns
         .iter()
-        .map(|c| recursive_primitive_types_ty(&c.ty, cache))
-        .flatten()
+        .flat_map(|c| recursive_primitive_types_ty(&c.ty, cache))
         .collect()
 }
 
@@ -77,8 +67,7 @@ pub(crate) fn table_primitive_types<'a>(attr: &'a TableMeta, cache: &'a Metadata
         .iter()
         .filter(|c| !c.skip)
         .filter(|c| !c.json)
-        .map(|c| recursive_primitive_types_ty(&c.ty, cache))
-        .flatten()
+        .flat_map(|c| recursive_primitive_types_ty(&c.ty, cache))
         .unique()
         .collect()
 }
@@ -95,13 +84,6 @@ pub fn from_row_bounds<'a>(
             #ty: ::ormlite::types::Type<#database>,
         }
     })
-}
-
-fn is_vec(p: &syn::Path) -> bool {
-    let Some(segment) = p.segments.last() else {
-        return false;
-    };
-    segment.ident == "Vec"
 }
 
 /// Used to bind fields to the query upon insertion, update, etc.

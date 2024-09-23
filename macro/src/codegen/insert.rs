@@ -8,16 +8,15 @@ use ormlite_attr::Type;
 use proc_macro2::TokenStream;
 use quote::quote;
 
-pub fn impl_Model__insert(db: &dyn OrmliteCodegen, attr: &TableMeta, metadata_cache: &MetadataCache) -> TokenStream {
-    let box_future = crate::util::box_fut_ts();
+pub fn impl_Model__insert(db: &dyn OrmliteCodegen, attr: &TableMeta, _metadata_cache: &MetadataCache) -> TokenStream {
     let mut placeholder = db.placeholder();
     let db = db.database_ts();
     let table = &attr.name;
     let params = attr.database_columns().map(|_| placeholder.next().unwrap());
 
-    let query_bindings = attr.database_columns().map(|c| insertion_binding(c));
+    let query_bindings = attr.database_columns().map(insertion_binding);
 
-    let insert_join = attr.many_to_one_joins().map(|c| insert_join(c));
+    let insert_join = attr.many_to_one_joins().map(insert_join);
 
     let late_bind = attr.many_to_one_joins().map(|c| {
         let id = &c.ident;
@@ -130,7 +129,7 @@ pub fn impl_Insert(db: &dyn OrmliteCodegen, meta: &TableMeta, model: &Ident, ret
     );
     let query_bindings = meta.database_columns().filter(|&c| !c.has_database_default).map(|c| {
         if let Some(rust_default) = &c.rust_default {
-            let default: syn::Expr = syn::parse_str(&rust_default).expect("Failed to parse default_value");
+            let default: syn::Expr = syn::parse_str(rust_default).expect("Failed to parse default_value");
             return quote! {
                 q = q.bind(#default);
             };
@@ -138,7 +137,7 @@ pub fn impl_Insert(db: &dyn OrmliteCodegen, meta: &TableMeta, model: &Ident, ret
         insertion_binding(c)
     });
 
-    let insert_join = meta.many_to_one_joins().map(|c| insert_join(c));
+    let insert_join = meta.many_to_one_joins().map(insert_join);
 
     let late_bind = meta.many_to_one_joins().map(|c| {
         let id = &c.ident;

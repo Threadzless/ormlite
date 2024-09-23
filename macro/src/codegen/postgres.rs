@@ -1,5 +1,4 @@
-use crate::codegen::common::{from_row_bounds, OrmliteCodegen};
-use crate::MetadataCache;
+use crate::codegen::common::OrmliteCodegen;
 use ormlite_core::query_builder::Placeholder;
 use proc_macro2::TokenStream;
 use quote::quote;

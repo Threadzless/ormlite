@@ -30,17 +30,14 @@ pub fn replace_placeholders<T: Iterator<Item = String>>(
                     }
                     '$' => {
                         let next_tok = it.next();
-                        if let Some(next_tok) = next_tok {
-                            match next_tok {
-                                Token::Number(text, _) => {
-                                    let n = text.parse::<usize>().map_err(|_| Error::OrmliteError(
-                                    format!("Failed to parse number after a $ during query tokenization. Value was: {text}"
-                                    )))?;
-                                    buf.push_str(&format!("${next_tok}"));
-                                    placeholder_count = std::cmp::max(placeholder_count, n);
-                                }
-                                _ => {}
-                            }
+                        if let Some(Token::Number(text, _)) = next_tok {
+                            // match next_tok {
+                            //     Token::Number(text, _) => {
+                            let n = text.parse::<usize>().map_err(|_| Error::OrmliteError(
+                            format!("Failed to parse number after a $ during query tokenization. Value was: {text}"
+                            )))?;
+                            buf.push_str(&format!("${}", next_tok.unwrap()));
+                            placeholder_count = std::cmp::max(placeholder_count, n);
                         }
                     }
                     _ => buf.push(*c),

@@ -171,14 +171,11 @@ fn check_for_pending_migrations(
 }
 
 fn check_reversible_compatibility(reversible: bool, migration_environment: Option<MigrationType>) -> Result<()> {
-    if let Some(migration_environment) = migration_environment {
-        if reversible && migration_environment == MigrationType::Simple {
-            return Err(anyhow!("You cannot mix reversible and non-reversible migrations"));
-        } else if !reversible && migration_environment != MigrationType::Simple {
-            return Err(anyhow!("You cannot mix reversible and non-reversible migrations"));
-        }
+    match (reversible, migration_environment) {
+        (true, Some(MigrationType::Simple)) => Err(anyhow!("You cannot mix reversible and non-reversible migrations")),
+        (false, Some(mt)) if mt != MigrationType::Simple => Err(anyhow!("You cannot mix reversible and non-reversible migrations")),
+        (_, _) => Ok(())
     }
-    Ok(())
 }
 
 #[allow(unused_variables)]

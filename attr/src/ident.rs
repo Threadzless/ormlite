@@ -1,12 +1,16 @@
 //! This ident needs to exist because the proc_macro2 idents are not Send.
+use std::ops::Deref;
+
 use proc_macro2::TokenStream;
 use quote::TokenStreamExt;
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Ident(String);
 
-impl Ident {
-    pub fn as_ref(&self) -> &String {
+impl Deref for Ident {
+    type Target = String;
+
+    fn deref(&self) -> &Self::Target {
         &self.0
     }
 }

@@ -12,6 +12,10 @@ impl<'q, DB: Database> QueryBuilderArgs<'q, DB> {
     pub fn len(&self) -> usize {
         self.1
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 }
 
 impl<'q, DB: Database> IntoArguments<'q, DB> for QueryBuilderArgs<'q, DB> {

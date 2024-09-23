@@ -1,4 +1,3 @@
-use ormlite_attr::Ident;
 use ormlite_attr::ModelMeta;
 use proc_macro2::TokenStream;
 use quote::quote;

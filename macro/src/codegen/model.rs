@@ -169,13 +169,13 @@ fn build_create_table_query(table_meta: &TableMeta) -> String {
 
     let mut query = String::new();
 
-    writeln!(query, "CREATE TABLE IF NOT EXISTS `{}` (", table_meta.name);
+    let _ = writeln!(query, "CREATE TABLE IF NOT EXISTS `{}` (", table_meta.name);
 
     let col_defs = table_meta.database_columns()
         .map(|c| format!("  {}", c.describe()))
         .join(",\n");
 
-    write!(query, "{col_defs}\n);");
+    let _ = write!(query, "{col_defs}\n);");
 
     query
 }

@@ -174,7 +174,7 @@ impl TryFromOrmlite for Schema {
                     let model_name = c.ty.inner_type_name();
                     let pkey = primary_key_type
                         .get(&model_name)
-                        .expect(&format!("Could not find model {} for join", model_name));
+                        .unwrap_or_else(|| panic!("Could not find model {} for join", model_name));
                     c.ty = Type::Inner(pkey.clone());
                 }
             }

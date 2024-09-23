@@ -4,11 +4,7 @@
 use codegen::insert::impl_Insert;
 use ormlite_attr::InsertMeta;
 use proc_macro::TokenStream;
-use std::borrow::Borrow;
 use std::collections::HashMap;
-use std::env;
-use std::env::var;
-use std::ops::Deref;
 
 use once_cell::sync::OnceCell;
 use quote::quote;
@@ -16,7 +12,6 @@ use syn::{parse_macro_input, Data, DeriveInput};
 
 use codegen::into_arguments::impl_IntoArguments;
 use ormlite_attr::schema_from_filepaths;
-use ormlite_attr::DeriveInputExt;
 use ormlite_attr::ModelMeta;
 use ormlite_attr::TableMeta;
 use ormlite_core::config::get_var_model_folders;
@@ -39,7 +34,7 @@ pub(crate) type MetadataCache = HashMap<String, ModelMeta>;
 static TABLES: OnceCell<MetadataCache> = OnceCell::new();
 
 fn get_tables() -> &'static MetadataCache {
-    TABLES.get_or_init(|| load_metadata_cache())
+    TABLES.get_or_init(load_metadata_cache)
 }
 
 fn load_metadata_cache() -> MetadataCache {
@@ -74,6 +69,7 @@ fn get_databases(table_meta: &TableMeta) -> Vec<Box<dyn OrmliteCodegen>> {
                 "postgres" => databases.push(Box::new(codegen::postgres::PostgresBackend)),
                 #[cfg(feature = "mysql")]
                 "mysql" => databases.push(Box::new(codegen::mysql::MysqlBackend {})),
+                #[allow(unreachable_patterns)]
                 "sqlite" | "postgres" | "mysql" => {
                     panic!("Database {} is not enabled. Enable it with features = [\"{}\"]", db, db)
                 }
@@ -131,10 +127,10 @@ pub fn expand_ormlite_model(input: TokenStream) -> TokenStream {
         let db = first.as_ref();
         let impl_TableMeta = impl_TableMeta(&meta.table, Some(meta.pkey.name.as_str()));
         let impl_JoinMeta = impl_JoinMeta(&meta);
-        let static_join_descriptions = static_join_descriptions(&meta.table, &tables);
+        let static_join_descriptions = static_join_descriptions(&meta.table, tables);
         let impl_Model = impl_Model(db, &meta, tables);
-        let impl_FromRow = impl_FromRow(db, &meta.table, &tables);
-        let impl_from_row_using_aliases = impl_from_row_using_aliases(db, &meta.table, &tables);
+        let impl_FromRow = impl_FromRow(db, &meta.table, tables);
+        let impl_from_row_using_aliases = impl_from_row_using_aliases(db, &meta.table, tables);
 
         let struct_ModelBuilder = struct_ModelBuilder(&ast, &meta);
         let impl_ModelBuilder = impl_ModelBuilder(db, &meta);
@@ -179,7 +175,7 @@ pub fn expand_ormlite_insert(input: TokenStream) -> TokenStream {
     let mut databases = get_databases(&meta.table);
     let tables = get_tables();
     if meta.name.is_none() {
-        if let Some(m) = tables.get(meta.returns.as_ref()) {
+        if let Some(m) = tables.get(&*meta.returns) {
             meta.table.name = m.name.clone();
         }
     }
@@ -197,8 +193,8 @@ pub fn expand_derive_fromrow(input: TokenStream) -> TokenStream {
 
     let expanded = databases.iter().map(|db| {
         let db = db.as_ref();
-        let impl_FromRow = impl_FromRow(db, &meta, &tables);
-        let impl_from_row_using_aliases = impl_from_row_using_aliases(db, &meta, &tables);
+        let impl_FromRow = impl_FromRow(db, &meta, tables);
+        let impl_from_row_using_aliases = impl_from_row_using_aliases(db, &meta, tables);
         quote! {
             #impl_FromRow
             #impl_from_row_using_aliases
@@ -213,12 +209,11 @@ pub fn expand_derive_fromrow(input: TokenStream) -> TokenStream {
 #[proc_macro_derive(TableMeta, attributes(ormlite))]
 pub fn expand_derive_table_meta(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
-    let Data::Struct(data) = &ast.data else {
+    let Data::Struct(_) = &ast.data else {
         panic!("Only structs can derive Model");
     };
 
     let table_meta = TableMeta::from_derive(&ast);
-    let databases = get_databases(&table_meta);
     let impl_TableMeta = impl_TableMeta(&table_meta, table_meta.pkey.as_deref());
     TokenStream::from(impl_TableMeta)
 }
@@ -226,7 +221,7 @@ pub fn expand_derive_table_meta(input: TokenStream) -> TokenStream {
 #[proc_macro_derive(IntoArguments, attributes(ormlite))]
 pub fn expand_derive_into_arguments(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
-    let Data::Struct(data) = &ast.data else {
+    let Data::Struct(_) = &ast.data else {
         panic!("Only structs can derive Model");
     };
 
@@ -247,6 +242,6 @@ pub fn expand_derive_into_arguments(input: TokenStream) -> TokenStream {
 ///
 /// This is useful for having data that's a string in the database, but a strum::EnumString in code.
 #[proc_macro_derive(ManualType)]
-pub fn expand_derive_manual_type(input: TokenStream) -> TokenStream {
+pub fn expand_derive_manual_type(_input: TokenStream) -> TokenStream {
     TokenStream::new()
 }

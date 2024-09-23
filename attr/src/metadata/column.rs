@@ -42,7 +42,7 @@ impl ColumnMeta {
     }
 
     pub fn from_fields<'a>(fields: impl Iterator<Item = &'a Field>) -> Vec<Self> {
-        fields.map(|f| ColumnMeta::from_field(f)).collect()
+        fields.map(ColumnMeta::from_field).collect()
     }
 
     pub fn from_syn(ident: &syn::Ident, ty: &syn::Type) -> Self {

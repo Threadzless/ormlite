@@ -14,7 +14,7 @@ pub struct ModelMeta {
 
 impl ModelMeta {
     pub fn builder_struct(&self) -> Ident {
-        Ident::from(format!("{}Builder", self.ident.as_ref()))
+        Ident::from(format!("{}Builder", self.ident))
     }
 
     pub fn database_columns_except_pkey(&self) -> impl Iterator<Item = &ColumnMeta> + '_ {
@@ -27,7 +27,7 @@ impl ModelMeta {
     pub fn from_derive(ast: &DeriveInput) -> Self {
         let attrs = TableAttr::from_attrs(&ast.attrs);
         let table = TableMeta::new(ast, &attrs);
-        let pkey = table.pkey.as_deref().expect(&format!(
+        let pkey = table.pkey.as_deref().unwrap_or_else(|| panic!(
             "No column marked with #[ormlite(primary_key)], and no column named id, uuid, {0}_id, or {0}_uuid",
             table.name,
         ));
@@ -41,7 +41,7 @@ impl ModelMeta {
             }
         }
         let pkey = table.columns.iter().find(|&c| c.name == pkey).unwrap().clone();
-        let insert_struct = insert_struct.map(|v| Ident::from(v));
+        let insert_struct = insert_struct.map(Ident::from);
         Self {
             table,
             insert_struct,

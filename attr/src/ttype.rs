@@ -96,7 +96,7 @@ impl Type {
     /// Convert Rust types into equivilent SQL types.
     pub fn try_into_sql_type(&self) -> Result<String, InnerType> {
         let inner = self.inner_type();
-        match inner.ident.as_ref().as_str() {
+        match inner.ident.as_str() {
             "i8" | "i16" | "i32" | "i64" | "i128" | "isize" |
             "u8" | "u16" | "u32" | "u64" | "u128" | "usize" => Ok(String::from("INTEGER")),
             "f32" => Ok(String::from("FLOAT")),

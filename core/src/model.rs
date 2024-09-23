@@ -10,6 +10,8 @@
 use crate::Result;
 use crate::SelectQueryBuilder;
 use futures::future::BoxFuture;
+use sqlx::any::AnyArguments;
+use sqlx::Arguments;
 
 /// A struct that is `Insert` is expected to have same fields as the model, excluding fields
 /// that have sane defaults at the database level. Concretely, if you have a Person struct:
@@ -108,6 +110,26 @@ where
     fn create_table<'e, E>(db: E) -> BoxFuture<'e, Result<()>>
     where 
         E: 'e + Send + ::sqlx::Executor<'e, Database = DB>;
+
+    /// Drops the table this [`Model`] is connected to
+    fn drop_table<'e, E>(db: E) -> BoxFuture<'e, Result<()>>
+    where 
+        E: 'e + Send + ::sqlx::Executor<'e, Database = DB>,
+        AnyArguments<'e>: sqlx::IntoArguments<'e, DB>
+    {
+        let mut args = AnyArguments::default();
+        args.add(Self::table_name()).unwrap();
+
+        Box::pin(async move {
+
+            let res = sqlx::query_with::<'e, DB, _>("DROP TABLE ?", args);
+            let res2 = db.execute(res);
+
+            res2.await?;
+
+            Ok(())
+        })
+    }
 }
 
 pub trait TableMeta {
