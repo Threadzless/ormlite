@@ -29,6 +29,9 @@ impl OrmliteCodegen for PostgresBackend {
 
 #[cfg(test)]
 mod test {
+    use crate::codegen::common::from_row_bounds;
+    use crate::MetadataCache;
+
     use super::*;
     use ormlite_attr::ttype::InnerType;
     use ormlite_attr::ColumnMeta;

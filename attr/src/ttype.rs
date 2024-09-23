@@ -27,10 +27,9 @@ impl Type {
         }
     }
 
-    pub fn is_string_or_optional_string(&self) -> bool {
+    pub fn is_optional_string(&self) -> bool {
         match self {
             Type::Option(inner) => inner.is_string(),
-            Type::Inner(ty) => ty.ident == "String",
             _ => false
         }
     }
